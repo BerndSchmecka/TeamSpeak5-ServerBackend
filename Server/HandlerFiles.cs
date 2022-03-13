@@ -11,7 +11,7 @@ namespace Server {
             if(path.StartsWith("/files/v1/upload/")) {
                 string? sub = Token.CheckUploadAuthorization(request);
                 if(sub == null){
-                    return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 400);
+                    return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 401);
                 }
                 Regex pathRegex = new Regex(Program.REGEX_UPLOAD_PATH);
                 if(!pathRegex.IsMatch(path)) {
@@ -38,7 +38,7 @@ namespace Server {
             } else if(path.StartsWith("/files/v1/file/")) {
                 string? sub = Token.CheckDownloadAuthorization(request);
                 if(sub == null){
-                    return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 400);
+                    return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 401);
                 }
                 Regex pathRegex = new Regex(Program.REGEX_DOWNLOAD_PATH);
                 if(!pathRegex.IsMatch(path)) {
