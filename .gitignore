@@ -3,3 +3,4 @@ obj/
 .vscode/
 FileStorage/
 config.json
+.DS_Store
