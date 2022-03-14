@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <style>
+        .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    </style>
+
+    <title>PokeBot Instrutions</title>
+  </head>
+  <body>
+      <div class="row">
+        <div class="col-md-auto">
+            <h1>Step 1</h1>
+            <p>
+                Enter "Dev" in the top left search bar and click on "Developer Tools".
+                There you need to enable "Debug Mode", which simplifies some steps and
+                allows you to temporarily switch your homebase without actually harming
+                your main chat account. After you've enabled debug mode, you will see a hamburger
+                menu next to your chat name in the bottom left corner (in the Screenshot below it'll
+                say "Setup Chat", but don't worry about that).
+            </p>
+            <img src="assets/picture1.png" class="img-thumbnail" alt="A view of the Dev Options">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-auto">
+            <h1>Step 2</h1>
+            <p>
+                Connect with the TeamSpeak Server. If you click on the hamburger menu, you'll see
+                that a new chat connection has appeared, but it won't work yet as the client does not
+                know the login information yet.
+            </p>
+            <img src="assets/picture2.png" class="img-thumbnail" alt="Connected to the server">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-auto">
+            <h1>Step 3</h1>
+            <p>
+                Disconnect from the Server and <strong>close your TeamSpeak Client</strong>.
+                Now head to <code>%LocalAppData%\TeamSpeak\Logs\Default</code> (on Windows)
+                and open <code>tschat.log</code>. Scroll to the bottom and search for a line
+                that contains something like <code>[info] Save data path: host=https://dev.dunkelmann.eu specifier=[YOUR_TS_IDENTITY] => C:\Users\[USERNAME]\AppData\Local\TeamSpeak\Cache\Default\tschat\Yzg1NzczOWExNTZjZDk5NmQwMTc2NTcwYTBhNTAyMTg</code>.
+                Remember the file path after the <code>=></code> arrow and the <code>host</code>-Value (later referred to as <code>tschat File</code> and <code>Matrix Host</code>). you'll need this information later on.
+            </p>
+            <img src="assets/picture3.png" class="img-thumbnail" alt="Notepad with the log open">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-auto">
+            <h1>Step 4</h1>
+            <p>
+                Reopen your TeamSpeak Client and reconnect to the Server.
+                Poke the <code>PokeBot</code> TeamSpeak Client to aquire a Chat Login Token. The Bot
+                will send you a private message, so double click on the Bot after you've sent the poke.
+                The message contains the token you'll need in the next step, so it's a good idea to copy
+                it. <span style="color: red">Attention: The Token is only valid for 5 minutes, so you'll
+                need to be quick to use it in the next step or read the whole instructions <strong>before</strong>
+                you try it yourself!</span>
+            </p>
+            <img src="assets/picture4.png" class="img-thumbnail" alt="Chat with the PokeBot">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-auto">
+            <h1>Step 5</h1>
+            <p>
+                Now fill out the form below.
+            </p>
+            <div class="form-group">
+                <label for="chatTokenInput">Chat Login Token</label>
+                <input type="text" class="form-control" id="chatTokenInput" placeholder="Enter Token">
+            </div>
+            <div class="form-group">
+                <label for="chatDomainInput">Matrix Host Domain</label>
+                <div class="input-group mb-2">
+                    <div class="input-group-prepend">
+                      <div class="input-group-text">https://</div>
+                    </div>
+                    <input type="text" class="form-control" id="chatDomainInput" placeholder="Enter Domain">
+                  </div>
+            </div>
+            <div class="form-group">
+                <button id="submitButton" class="btn btn-primary">Absenden</button>
+            </div>
+            <div class="form-group">
+                <label for="gzipData">GZip Data</label>
+                <textarea class="form-control" id="gzipData" placeholder="GZip Data will show up here"></textarea>
+            </div>
+            <img src="assets/picture5.png" class="img-thumbnail" alt="Connected to the server">
+        </div>
+      </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js" integrity="sha512-EAKzSKex+PXC0U9OG13r1059ysjrjkJEpZoONCnZa0mBROY28iBOOxZSErUVw1LzLr2+U5PhR7zPCPKidUVJqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="matrixLogin.js"></script>
+  </body>
+</html>
