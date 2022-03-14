@@ -25,7 +25,7 @@ namespace PokeBot {
          return tokenHandler.WriteToken(token);
         }
 
-        public static string getChatConfig(string login_token) {
+        /*public static string getChatConfig(string login_token) {
             string? wellKnownJson = null;
             try {
                 WebRequest wc = HttpWebRequest.Create($"http://{Program.administrativeDomain}/.well-known/teamspeak/{Program.serverId}");
@@ -97,10 +97,10 @@ namespace PokeBot {
             string rawStr = Program.getGZipTemplate(response);
 
             return Program.CompressString(rawStr);
-        }
+        }*/
     }
 
-    [Serializable]
+    /*[Serializable]
     class WellKnownConfig {
         [JsonPropertyName("teamspeak.server")]
         public BaseUrlObj teamspeak_server {get; set;}
@@ -158,5 +158,5 @@ namespace PokeBot {
             this.home_server = home_server;
             this.user_id = user_id;
         }
-    }
+    }*/
 }

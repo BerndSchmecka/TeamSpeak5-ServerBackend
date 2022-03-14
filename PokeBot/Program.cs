@@ -24,14 +24,11 @@ namespace PokeBot {
 
         public static string serverId = "";
         public static string serverAddress = "";
-        public static string administrativeDomain = "";
+        //public static string administrativeDomain = "";
         public static string chatTokenSecret = "";
         public static string clientIdentity = "";
 
         public static void Main(string[] args) {
-            handler = new ConsoleEventDelegate(ConsoleEventCallback);
-            SetConsoleCtrlHandler(handler, true);
-
             Console.CancelKeyPress += delegate {
                 ConsoleEventCallback(2);
             };
@@ -52,19 +49,19 @@ namespace PokeBot {
 
             Program.serverId = cfg.serverId;
             Program.serverAddress = cfg.serverAddress;
-            Program.administrativeDomain = cfg.administrativeDomain;
+            //Program.administrativeDomain = cfg.administrativeDomain;
             Program.chatTokenSecret = cfg.chatTokenSecret;
             Program.clientIdentity = cfg.clientIdentity;
 
             Console.WriteLine($"serverId={serverId}");
             Console.WriteLine($"serverAddress={serverAddress}");
-            Console.WriteLine($"administrativeDomain={administrativeDomain}");
+            //Console.WriteLine($"administrativeDomain={administrativeDomain}");
             Console.WriteLine($"chatTokenSecret={chatTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine($"clientIdentity={clientIdentity.Substring(0, 5) + " ..."}");
 
             ConnectionDataFull cd = new ConnectionDataFull();
             cd.Address = Program.serverAddress;
-            cd.Username = "Morpheus Test";
+            cd.Username = "PokeBot";
             cd.Identity = TsCrypt.LoadIdentityDynamic(clientIdentity).Value;
             cd.VersionSign = new VersionSign("5.0.0-qa-request-chat-7 [Build: 1646854452]", "Windows", "0iRGPzh37MelxPeKE15K754jAi+yXJ2bu+pXV1ErOFbEF504WtUZaAIoFVHBNheIVdSCrxuWFF17xG1w2gSICQ==");
 
@@ -79,7 +76,7 @@ namespace PokeBot {
                         var token = Token.GenerateChatToken(uuidHex);
 
                         sender.SendPrivateMessage(token, poke.InvokerId);
-                        sender.SendPrivateMessage(Token.getChatConfig(token), poke.InvokerId);
+                        //sender.SendPrivateMessage(Token.getChatConfig(token), poke.InvokerId);
                     }
                 }
             };
@@ -94,14 +91,8 @@ namespace PokeBot {
             }
             return false;
         }
-        static ConsoleEventDelegate handler;   // Keeps it from getting garbage collected
-        // Pinvoke
-        private delegate bool ConsoleEventDelegate(int eventType);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
 
-
-        public static string getGZipTemplate(MatrixLoginResponse resp) => "{\"serial\":13,\"next_batch\":\"\",\"rooms\":{},\"pinned_messages\":{},\"room_invites\":{},\"presences\":{},\"login_data\":{\"user_id\":\"" + resp.user_id + "\",\"access_token\":\"" + resp.access_token + "\",\"home_server\":\"" + resp.home_server + "\",\"device_id\":\"" + resp.device_id + "\"},\"account_data\":{\"direct_rooms\":{\"rooms\":{}}},\"transaction_id\":1,\"ignored_users\":{},\"room_events\":{}}";
+        /*public static string getGZipTemplate(MatrixLoginResponse resp) => "{\"serial\":13,\"next_batch\":\"\",\"rooms\":{},\"pinned_messages\":{},\"room_invites\":{},\"presences\":{},\"login_data\":{\"user_id\":\"" + resp.user_id + "\",\"access_token\":\"" + resp.access_token + "\",\"home_server\":\"" + resp.home_server + "\",\"device_id\":\"" + resp.device_id + "\"},\"account_data\":{\"direct_rooms\":{\"rooms\":{}}},\"transaction_id\":1,\"ignored_users\":{},\"room_events\":{}}";
 
             public static string CompressString(string text)
         {
@@ -117,6 +108,6 @@ namespace PokeBot {
 
         return outputbase64; // RETURNS AS BASE64
         //return Encoding.UTF8.GetString(gZipBuffer); // RETURN AS UTF8 STRING
-        }
+        }*/
     }
 }

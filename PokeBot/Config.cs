@@ -13,8 +13,8 @@ namespace PokeBot {
         [JsonPropertyName("serverAddress")]
         public string serverAddress {get; set;}
 
-        [JsonPropertyName("administrativeDomain")]
-        public string administrativeDomain {get; set;}
+        /*[JsonPropertyName("administrativeDomain")]
+        public string administrativeDomain {get; set;}*/
 
         [JsonPropertyName("chatTokenSecret")]
         public string chatTokenSecret {get; set;}
@@ -22,11 +22,11 @@ namespace PokeBot {
         [JsonPropertyName("clientIdentity")]
         public string clientIdentity {get; set;}
 
-        public Config(int configVersion, string serverId, string serverAddress, string administrativeDomain, string chatTokenSecret, string clientIdentity) {
+        public Config(int configVersion, string serverId, string serverAddress, /*string administrativeDomain,*/ string chatTokenSecret, string clientIdentity) {
             this.configVersion = configVersion;
             this.serverId = serverId;
             this.serverAddress = serverAddress;
-            this.administrativeDomain = administrativeDomain;
+            //this.administrativeDomain = administrativeDomain;
             this.chatTokenSecret = chatTokenSecret;
             this.clientIdentity = clientIdentity;
         }
