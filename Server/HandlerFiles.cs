@@ -1,4 +1,6 @@
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using MimeTypes;
 
@@ -9,7 +11,11 @@ namespace Server {
         {
             string path = request.Url.AbsolutePath;
             if(path.StartsWith("/files/v1/upload/")) {
-                string? sub = Token.CheckUploadAuthorization(request);
+                (string?, string?) check = Token.CheckUploadAuthorization(request);
+
+                string? perm = check.Item1;
+                string? sub = check.Item2;
+
                 if(sub == null){
                     return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 401);
                 }
@@ -36,8 +42,11 @@ namespace Server {
 
                 return new ResponseData(response, Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex), "text/plain", 200);
             } else if(path.StartsWith("/files/v1/file/")) {
-                string? sub = Token.CheckDownloadAuthorization(request);
-                if(sub == null){
+                (string?, string?) check = Token.CheckDownloadAuthorization(request);
+                string? perm = check.Item1;
+                string? sub = check.Item2;
+
+                if(perm == null || sub == null){
                     return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 401);
                 }
                 Regex pathRegex = new Regex(Program.REGEX_DOWNLOAD_PATH);
@@ -53,7 +62,27 @@ namespace Server {
                 string roomId = match.Groups[5].Value;
                 string fileName = match.Groups[6].Value;
 
+                var permission = JsonSerializer.Deserialize<DownloadPermResponse>(perm);
+
+                Regex getfileReg = new Regex(Program.REGEX_GETFILE);
+
+                if(permission == null || permission.getfile == null || !getfileReg.IsMatch(permission.getfile)) {
+                    return ApiServer.TS5ErrorData(response, "TOKEN_MISSING", "invalid or malformed auth method", 401);
+                }
+
+                Match getfileMatch = getfileReg.Match(permission.getfile);
+                string gfIdentity = getfileMatch.Groups[1].Value;
+                string gfHomeServer = getfileMatch.Groups[2].Value.Replace("\\.", ".");
+                string gfRoomId = getfileMatch.Groups[3].Value;
+                string gfExt = getfileMatch.Groups[4].Value.Split('.').Last();
+
+                string[] subsplit = sub.Split(",");
+
                 string ext = fileName.Split('.').Last();
+
+                if(!gfIdentity.Equals(uuidHex) || !gfHomeServer.Equals(homeServer) || !gfRoomId.Equals(roomId) || (!gfExt.Equals("*") && !gfExt.Equals(ext)) || subsplit.Length != 3 || !subsplit[0].Equals(serverId)) {
+                    return ApiServer.ErrorData(response, "Not Authorized for this file", 401);
+                }
 
                 Directory.CreateDirectory(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex));
                 using(var fs = File.OpenRead(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex, fileName))) {
@@ -64,6 +93,16 @@ namespace Server {
             } else {
                 return ApiServer.ErrorData(response, $"Cannot {request.HttpMethod} {request.Url.AbsolutePath}", 404);
             }
+        }
+    }
+
+    [Serializable]
+    class DownloadPermResponse {
+        [JsonPropertyName("getfile")]
+        public string getfile {get; set;}
+
+        public DownloadPermResponse(string getfile){
+            this.getfile = getfile;
         }
     }
 }

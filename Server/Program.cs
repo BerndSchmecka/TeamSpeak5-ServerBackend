@@ -23,10 +23,11 @@ namespace Server
 
         public static DateTime epoch = new System.DateTime(1970,1,1,0,0,0,DateTimeKind.Utc);
 
-        public static string MATRIX_USER_IDENTIFIER_REGEX = "@[A-Z0-9._=-]+:[A-Z0-9.-]+\\.[A-Z]{2,}";
+        public static string TS5_MATRIX_USER_IDENTIFIER_REGEX = @"@ts_([0-9a-fA-F]{40})_([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}):([A-Za-z0-9.-]+\.[A-Za-z]{2,})";
         public static string REGEX_UPLOAD_PATH = @"\/files\/v1\/upload\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/chan\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/([a-fA-F0-9]{40})\/([A-Za-z0-9.]+)\/rooms\/([A-Za-z]{18})\/([^/]*$)";
         public static string REGEX_DOWNLOAD_PATH = @"\/files\/v1\/file\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/chan\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/([a-fA-F0-9]{40})\/([A-Za-z0-9.]+)\/rooms\/([A-Za-z]{18})\/([^/]*$)";
-        public static string REGEX_DOWNLOAD_TOKEN = @"\/authorization\/v1\/matrix_downloadtoken\/(%40[A-Za-z0-9._=-]+%3A[A-Za-z0-9.-]+\.[A-Za-z]{2,})\/(%21[A-Za-z0-9._=-]{18}%3A[A-Za-z0-9.-]+\.[A-Za-z]{2,})";
+        public static string REGEX_DOWNLOAD_TOKEN = @"\/authorization\/v1\/matrix_downloadtoken\/((%40|@)[A-Za-z0-9._=-]+(%3A|:)[A-Za-z0-9.-]+\.[A-Za-z]{2,})\/((%21|!)([A-Za-z0-9._=-]{18})(%3A|:)[A-Za-z0-9.-]+\.[A-Za-z]{2,})";
+        public static string REGEX_GETFILE = @"([0-9A-Fa-f]{40})\/([A-Za-z0-9\\.]+)\/rooms\/([A-Za-z]{18})\/([^/]*$)";
 
         internal static string localHomeServer = "";
         internal static string uploadTokenSecret = "";

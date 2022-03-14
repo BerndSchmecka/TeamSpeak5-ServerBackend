@@ -35,7 +35,7 @@ namespace Server {
                             return new ResponseData(response, await res.Content.ReadAsStringAsync(), "application/json", (int)res.StatusCode);
                         }
                         var tokenResponse = JsonSerializer.Deserialize<VerifyTokenResponse>(await res.Content.ReadAsStringAsync());
-                        Regex matrixRegEx = new Regex(Program.MATRIX_USER_IDENTIFIER_REGEX, RegexOptions.IgnoreCase);
+                        Regex matrixRegEx = new Regex(Program.TS5_MATRIX_USER_IDENTIFIER_REGEX, RegexOptions.IgnoreCase);
                         if(!matrixRegEx.IsMatch(tokenResponse.sub)){
                             return ApiServer.ErrorData(response, "Internal error validating Matrix user", 500);
                         }
@@ -44,8 +44,8 @@ namespace Server {
                 }
             } else if (downloadPath.IsMatch(path)) {
                 Match match = downloadPath.Match(path);
-                string matrixId = match.Groups[1].Value;
-                string roomId = match.Groups[1].Value;
+                string matrixId = WebUtility.UrlDecode(match.Groups[1].Value);
+                string roomId = WebUtility.UrlDecode(match.Groups[6].Value);
 
                 if(!request.HasEntityBody) {
                     return ApiServer.ErrorData(response, "Request body must not be empty", 400);
@@ -63,19 +63,37 @@ namespace Server {
                         if(obj.Token == null){
                             return ApiServer.ErrorData(response, "Token may not be null", 400);
                         }
-                        if(!obj.HomeServer.Equals(Program.localHomeServer)){
-                            return ApiServer.ErrorData(response, "user is not local", 401);
-                        }
+
                         var res = await validateOpenIDToken(obj);
                         if(!res.IsSuccessStatusCode){
-                            return new ResponseData(response, await res.Content.ReadAsStringAsync(), "application/json", (int)res.StatusCode);
+                            return new ResponseData(response, "{\"errcode\": \"M_UNKNOWN_TOKEN\", \"error\": \"Access Token unknown or expired\"}", "application/json", 401);
                         }
+
                         var tokenResponse = JsonSerializer.Deserialize<VerifyTokenResponse>(await res.Content.ReadAsStringAsync());
-                        Regex matrixRegEx = new Regex(Program.MATRIX_USER_IDENTIFIER_REGEX, RegexOptions.IgnoreCase);
-                        if(!matrixRegEx.IsMatch(tokenResponse.sub)){
-                            return ApiServer.ErrorData(response, "Internal error validating Matrix user", 500);
+                        if(tokenResponse == null || tokenResponse.sub == null) {
+                            return new ResponseData(response, "{\"errcode\": \"M_UNKNOWN_TOKEN\", \"error\": \"Access Token unknown or expired\"}", "application/json", 401);
                         }
-                        return new ResponseData(response, JsonSerializer.Serialize(new TokenResponse(Token.GenerateDownloadToken(tokenResponse.sub))), "application/json", 200);
+
+                        Regex matrixRegEx = new Regex(Program.TS5_MATRIX_USER_IDENTIFIER_REGEX, RegexOptions.IgnoreCase);
+
+                        if(!matrixRegEx.IsMatch(tokenResponse.sub)){
+                            return ApiServer.ErrorData(response, "Internal error validating OpenID Token", 500);
+                        }
+
+                        if(!matrixRegEx.IsMatch(matrixId)) {
+                            return ApiServer.ErrorData(response, "invalid TeamSpeak Matrix user id", 400);
+                        }
+
+                        Match ts5id = matrixRegEx.Match(matrixId);
+                        string uuidHex = ts5id.Groups[1].Value;
+                        string serverId = ts5id.Groups[2].Value;
+                        string homeServer = ts5id.Groups[3].Value;
+
+                        if(!homeServer.Equals(Program.localHomeServer)){
+                            return ApiServer.ErrorData(response, "this matrix server is not under my control", 401);
+                        }
+
+                        return new ResponseData(response, JsonSerializer.Serialize(new TokenResponse(Token.GenerateDownloadToken(uuidHex, serverId, homeServer, roomId))), "application/json", 200);
                     }
                 }
             } else {
