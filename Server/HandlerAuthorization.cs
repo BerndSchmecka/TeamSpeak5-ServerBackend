@@ -39,7 +39,13 @@ namespace Server {
                         if(!matrixRegEx.IsMatch(tokenResponse.sub)){
                             return ApiServer.ErrorData(response, "Internal error validating Matrix user", 500);
                         }
-                        return new ResponseData(response, JsonSerializer.Serialize(new TokenResponse(Token.GenerateUploadToken(tokenResponse.sub))), "application/json", 200);
+
+                        Match ts5id = matrixRegEx.Match(tokenResponse.sub);
+                        string uuidHex = ts5id.Groups[1].Value;
+                        string serverId = ts5id.Groups[2].Value;
+                        string homeServer = ts5id.Groups[3].Value;
+
+                        return new ResponseData(response, JsonSerializer.Serialize(new TokenResponse(Token.GenerateUploadToken(uuidHex, serverId, homeServer, Program.PUTFILE_ROOM_PLACEHOLDER))), "application/json", 200);
                     }
                 }
             } else if (downloadPath.IsMatch(path)) {

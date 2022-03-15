@@ -29,18 +29,26 @@ namespace Server {
          return tokenHandler.WriteToken(token);
         }
 
-        public static string GenerateUploadToken(string sub)
+        public static string GenerateUploadToken(string uuidHex, string serverId, string homeServer, string roomId)
         {
             var key = Convert.FromBase64String(Program.uploadTokenSecret);
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-              Subject = new ClaimsIdentity(new[] {new Claim("sub", sub)}),
+              Subject = new ClaimsIdentity(new[] {new Claim("sub", $"{serverId},d767d7d6-cc95-5579-bf32-a2ce31cc4660,*")}),
                Expires = DateTime.UtcNow.AddMinutes(5),
                Audience = "TeamSpeak Filetransfer",
                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
          };
+
+         tokenDescriptor.Claims = new Dictionary<string, object>();
+
+         tokenDescriptor.Claims.Add("http://v1.teamspeak.com/perm", new { putfile = $"{uuidHex}/{homeServer.Replace(".", "\\.")}/rooms/{roomId}/.*" });
+         tokenDescriptor.Claims.Add("http://v1.teamspeak.com/sq", new { read = -1, write = 0, store = 0 });
+         tokenDescriptor.Claims.Add("http://v1.teamspeak.com/cq", new { read = -1, write = 0, store = 0 });
+         tokenDescriptor.Claims.Add("http://v1.teamspeak.com/uq", new { read = -1, write = 0, store = 0 });
+         tokenDescriptor.Claims.Add("http://v1.teamspeak.com/fs", 0);
 
          var token = tokenHandler.CreateToken(tokenDescriptor);
          return tokenHandler.WriteToken(token);
