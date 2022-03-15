@@ -85,6 +85,19 @@ namespace Server {
                     }
                 } else if (request.HttpMethod == "OPTIONS"){
                     rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
+                } else if (request.HttpMethod == "PUT") {
+                    Handler handler;
+                    if(request.Url.AbsolutePath.StartsWith("/storage/")) {
+                        handler = new HandlerStorage();
+                    } else {
+                        handler = new HandlerDefault();
+                    }
+
+                    try {
+                        rd = await handler.generateResponse(request, response);
+                    } catch (Exception ex) {
+                        rd = ApiServer.ErrorData(response, ex.Message, 500);
+                    }
                 } else if (request.HttpMethod == "POST") {
                     Handler handler;
                     if(request.Url.AbsolutePath.StartsWith("/authorization/")) {

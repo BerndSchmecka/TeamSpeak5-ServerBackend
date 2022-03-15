@@ -60,15 +60,7 @@ namespace Server {
                     return ApiServer.TS5ErrorData(response, "UNAUTHORIZED", "unauthorized path", 401);
                 }
 
-                Directory.CreateDirectory(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex));
-
-
-                /* TODO 
-                {"location": "", "headers": ""}
-                
-                */
-
-                return new ResponseData(response, Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex), "text/plain", 200);
+                return new ResponseData(response, JsonSerializer.Serialize(new { location = $"https://{request.UserHostName}/storage/{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", headers = new { Authorization = request.Headers.Get("Authorization") }}), "application/json", 200);
             } else if(path.StartsWith("/files/v1/file/")) {
                 (string?, string?) check = Token.CheckDownloadAuthorization(request);
                 string? perm = check.Item1;
