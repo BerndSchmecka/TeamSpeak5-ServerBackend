@@ -35,6 +35,9 @@ namespace Server
         internal static string localHomeServer = "";
         internal static string uploadTokenSecret = "";
         internal static string downloadTokenSecret = "";
+        internal static string aws_base_url = "";
+        internal static string aws_access_id = "";
+        internal static string aws_secret_key = "";
 
         static void Main(string[] args)
         {
@@ -47,7 +50,7 @@ namespace Server
             #endif
 
             Config cfg = JsonFileReader.Read<Config>("config.json");
-            if(cfg.configVersion != 1) {
+            if(cfg.configVersion != 2) {
                 Console.WriteLine("Wrong config version, exiting ...");
                 return;
             }
@@ -55,9 +58,19 @@ namespace Server
             Program.uploadTokenSecret = cfg.uploadTokenSecret;
             Program.downloadTokenSecret = cfg.downloadTokenSecret;
 
+            Program.aws_base_url = cfg.awsInfo.base_url;
+            Program.aws_access_id = cfg.awsInfo.accessId;
+            Program.aws_secret_key = cfg.awsInfo.secretKey;
+
+            Console.WriteLine("--------------------------------------------");
             Console.WriteLine($"localHomeServer={localHomeServer}");
             Console.WriteLine($"uploadTokenSecret={uploadTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine($"downloadTokenSecret={downloadTokenSecret.Substring(0, 5) + " ..."}");
+            Console.WriteLine("--------------------------------------------");
+            Console.WriteLine($"awsBaseUrl={aws_base_url}");
+            Console.WriteLine($"awsAccessId={aws_access_id}");
+            Console.WriteLine($"awsSecretKey={aws_secret_key.Substring(0, 5) + " ..."}");
+            Console.WriteLine("--------------------------------------------");
             Console.WriteLine("Starting server ...");
             ApiServer server = new ApiServer();
             server.StartServer();
