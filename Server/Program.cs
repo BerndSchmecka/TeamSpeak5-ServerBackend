@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace Server
@@ -32,11 +33,16 @@ namespace Server
         public static string REGEX_STORAGE_PATH = @"\/storage\/([A-Za-z0-9.]+)\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/([A-Za-z]{18})\/([a-fA-F0-9]{40})\/([^/]*$)";
         public static string PUTFILE_ROOM_PLACEHOLDER = "aaaaaaaaaaaaaaaaaa";
 
+        public static SHA256 mySHA256 = SHA256.Create();
+
         internal static string localHomeServer = "";
         internal static string uploadTokenSecret = "";
         internal static string downloadTokenSecret = "";
-        internal static string aws_base_url = "";
-        internal static string aws_access_id = "";
+
+        internal static string aws_bucket_name = "";
+        internal static string aws_bucket_region = "";
+        internal static string aws_base_path = "";
+        internal static string aws_access_key = "";
         internal static string aws_secret_key = "";
 
         static void Main(string[] args)
@@ -58,8 +64,10 @@ namespace Server
             Program.uploadTokenSecret = cfg.uploadTokenSecret;
             Program.downloadTokenSecret = cfg.downloadTokenSecret;
 
-            Program.aws_base_url = cfg.awsInfo.base_url;
-            Program.aws_access_id = cfg.awsInfo.accessId;
+            Program.aws_bucket_name = cfg.awsInfo.bucketName;
+            Program.aws_bucket_region = cfg.awsInfo.bucketRegion;
+            Program.aws_base_path = cfg.awsInfo.basePath;
+            Program.aws_access_key = cfg.awsInfo.accessKey;
             Program.aws_secret_key = cfg.awsInfo.secretKey;
 
             Console.WriteLine("--------------------------------------------");
@@ -67,8 +75,8 @@ namespace Server
             Console.WriteLine($"uploadTokenSecret={uploadTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine($"downloadTokenSecret={downloadTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine("--------------------------------------------");
-            Console.WriteLine($"awsBaseUrl={aws_base_url}");
-            Console.WriteLine($"awsAccessId={aws_access_id}");
+            Console.WriteLine($"awsBaseUrl=https://{aws_bucket_name}.s3.{aws_bucket_region}.amazonaws.com{aws_base_path}");
+            Console.WriteLine($"awsAccessKey={aws_access_key}");
             Console.WriteLine($"awsSecretKey={aws_secret_key.Substring(0, 5) + " ..."}");
             Console.WriteLine("--------------------------------------------");
             Console.WriteLine("Starting server ...");

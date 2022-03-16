@@ -27,18 +27,26 @@ namespace Server {
 
     [Serializable]
     public class AWSInfo {
-        [JsonPropertyName("base_url")]
-        public string base_url {get; set;}
+        [JsonPropertyName("bucketName")]
+        public string bucketName {get; set;}
 
-        [JsonPropertyName("accessId")]
-        public string accessId {get; set;}
+        [JsonPropertyName("bucketRegion")]
+        public string bucketRegion {get; set;}
+
+        [JsonPropertyName("basePath")]
+        public string basePath {get; set;}
+
+        [JsonPropertyName("accessKey")]
+        public string accessKey {get; set;}
 
         [JsonPropertyName("secretKey")]
         public string secretKey {get; set;}
 
-        public AWSInfo(string base_url, string accessId, string secretKey){
-            this.base_url = base_url;
-            this.accessId = accessId;
+        public AWSInfo(string bucketName, string bucketRegion, string basePath, string accessKey, string secretKey){
+            this.bucketName = bucketName;
+            this.bucketRegion = bucketRegion;
+            this.basePath = basePath;
+            this.accessKey = accessKey;
             this.secretKey = secretKey;
         }
     }

@@ -1,7 +1,10 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Web;
 using MimeTypes;
 
 namespace Server {
@@ -60,7 +63,37 @@ namespace Server {
                     return ApiServer.TS5ErrorData(response, "UNAUTHORIZED", "unauthorized path", 401);
                 }
 
-                return new ResponseData(response, JsonSerializer.Serialize(new { location = $"https://{request.UserHostName}/storage/{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", headers = new { Authorization = request.Headers.Get("Authorization") }}), "application/json", 200);
+                var endpointUrl = $"https://{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}";
+                var date = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+
+                string canonicalRequest = "PUT\n" +
+                                          $"{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}" + "\n" +
+                                          "\n"+ 
+                                          $"host:{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com\n" +
+                                          $"x-amz-content-sha256:UNSIGNED-PAYLOAD\n"+
+                                          $"x-amz-date:{date}\n"+
+                                          "\n"+
+                                          "host;x-amz-content-sha256;x-amz-date\n"+
+                                          "UNSIGNED-PAYLOAD";
+
+                string scope = DateTime.UtcNow.ToString("yyyyMMdd") + "/" + Program.aws_bucket_region + "/s3/aws4_request";
+                string stringToSign = "AWS4-HMAC-SHA256" + "\n" + date + "\n" + scope + "\n" + BitConverter.ToString(Program.mySHA256.ComputeHash(Encoding.UTF8.GetBytes(canonicalRequest))).Replace("-", "").ToLower();
+
+                HMACSHA256 DateKey = new HMACSHA256(Encoding.UTF8.GetBytes($"AWS4{Program.aws_secret_key}"));
+                byte[] DateRegionKeyKey = DateKey.ComputeHash(Encoding.UTF8.GetBytes(DateTime.UtcNow.ToString("yyyyMMdd")));
+                HMACSHA256 DateRegionKey = new HMACSHA256(DateRegionKeyKey);
+                byte[] DateRegionServiceKeyKey = DateRegionKey.ComputeHash(Encoding.UTF8.GetBytes(Program.aws_bucket_region));
+                HMACSHA256 DateRegionServiceKey = new HMACSHA256(DateRegionServiceKeyKey);
+                byte[] SigningKeyKey = DateRegionServiceKey.ComputeHash(Encoding.UTF8.GetBytes("s3"));
+                HMACSHA256 SigningKey = new HMACSHA256(SigningKeyKey);
+                byte[] key = SigningKey.ComputeHash(Encoding.UTF8.GetBytes("aws4_request"));
+
+                HMACSHA256 final = new HMACSHA256(key);
+                byte[] signature = final.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
+
+                string authHeader = $"AWS4-HMAC-SHA256 Credential={Program.aws_access_key}/{scope},SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature={BitConverter.ToString(signature).Replace("-", "").ToLower()}";
+
+                return new ResponseData(response, JsonSerializer.Serialize(new { location = endpointUrl, headers = new { Authorization = authHeader, x_amz_content_sha256 = "UNSIGNED_PAYLOAD", x_amz_date = date }}), "application/json", 200);
             } else if(path.StartsWith("/files/v1/file/")) {
                 (string?, string?) check = Token.CheckDownloadAuthorization(request);
                 string? perm = check.Item1;
