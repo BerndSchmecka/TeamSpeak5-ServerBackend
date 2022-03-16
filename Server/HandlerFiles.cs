@@ -64,36 +64,12 @@ namespace Server {
                 }
 
                 var endpointUrl = $"https://{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}";
-                var date = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
 
-                string canonicalRequest = "PUT\n" +
-                                          $"{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}" + "\n" +
-                                          "\n"+ 
-                                          $"host:{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com\n" +
-                                          $"x-amz-content-sha256:UNSIGNED-PAYLOAD\n"+
-                                          $"x-amz-date:{date}\n"+
-                                          "\n"+
-                                          "host;x-amz-content-sha256;x-amz-date\n"+
-                                          "UNSIGNED-PAYLOAD";
+                return new ResponseData(response, JsonSerializer.Serialize(new { 
+                    location = endpointUrl,
+                    headers = signAWSRequest("PUT", $"{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", "UNSIGNED-PAYLOAD")
+                }), "application/json", 200);
 
-                string scope = DateTime.UtcNow.ToString("yyyyMMdd") + "/" + Program.aws_bucket_region + "/s3/aws4_request";
-                string stringToSign = "AWS4-HMAC-SHA256" + "\n" + date + "\n" + scope + "\n" + BitConverter.ToString(Program.mySHA256.ComputeHash(Encoding.UTF8.GetBytes(canonicalRequest))).Replace("-", "").ToLower();
-
-                HMACSHA256 DateKey = new HMACSHA256(Encoding.UTF8.GetBytes($"AWS4{Program.aws_secret_key}"));
-                byte[] DateRegionKeyKey = DateKey.ComputeHash(Encoding.UTF8.GetBytes(DateTime.UtcNow.ToString("yyyyMMdd")));
-                HMACSHA256 DateRegionKey = new HMACSHA256(DateRegionKeyKey);
-                byte[] DateRegionServiceKeyKey = DateRegionKey.ComputeHash(Encoding.UTF8.GetBytes(Program.aws_bucket_region));
-                HMACSHA256 DateRegionServiceKey = new HMACSHA256(DateRegionServiceKeyKey);
-                byte[] SigningKeyKey = DateRegionServiceKey.ComputeHash(Encoding.UTF8.GetBytes("s3"));
-                HMACSHA256 SigningKey = new HMACSHA256(SigningKeyKey);
-                byte[] key = SigningKey.ComputeHash(Encoding.UTF8.GetBytes("aws4_request"));
-
-                HMACSHA256 final = new HMACSHA256(key);
-                byte[] signature = final.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
-
-                string authHeader = $"AWS4-HMAC-SHA256 Credential={Program.aws_access_key}/{scope},SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature={BitConverter.ToString(signature).Replace("-", "").ToLower()}";
-
-                return new ResponseData(response, JsonSerializer.Serialize(new { location = endpointUrl, headers = new { Authorization = authHeader, x_amz_content_sha256 = "UNSIGNED_PAYLOAD", x_amz_date = date }}), "application/json", 200);
             } else if(path.StartsWith("/files/v1/file/")) {
                 (string?, string?) check = Token.CheckDownloadAuthorization(request);
                 string? perm = check.Item1;
@@ -141,20 +117,66 @@ namespace Server {
                     return ApiServer.TS5ErrorData(response, "UNAUTHORIZED", "unauthorized path", 401);
                 }
 
-                Directory.CreateDirectory(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex));
+                var endpointUrl = $"https://{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}";
 
-                if(!File.Exists(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex, fileName))){
-                    return ApiServer.TS5ErrorData(response, "FILE_NOT_FOUND", "Not Found", 404);
+try {
+                HttpClient client = new HttpClient();
+                Headers hd = signAWSRequest("GET", $"{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", hd.Authorization);
+                client.DefaultRequestHeaders.TryAddWithoutValidation("x-amz-content-sha256", hd.x_amz_content_sha256);
+                client.DefaultRequestHeaders.TryAddWithoutValidation("x-amz-date", hd.x_amz_date);
+                using(var res = await client.GetAsync(endpointUrl)) {
+                    if(res.IsSuccessStatusCode) {
+                                            using(var str = res.Content.ReadAsStream()){
+                        byte[] array = new byte[str.Length];
+                        str.Read(array, 0, array.Length);
+                        return new ResponseData(response, array, System.Text.Encoding.UTF8, MimeTypeMap.GetMimeType(ext), 200);
+                    }
+                    } else if (res.StatusCode.Equals(HttpStatusCode.NotFound)){
+                        return ApiServer.TS5ErrorData(response, "FILE_NOT_FOUND", "Not Found", 404);
+                    } else {
+                        return ApiServer.ErrorData(response, "Error getting file from AWS Bucket", (int)res.StatusCode);
+                    }
                 }
-
-                using(var fs = File.OpenRead(Path.Combine("FileStorage", homeServer, serverId, roomId, uuidHex, fileName))) {
-                    byte[] array = new byte[fs.Length];
-                    fs.Read(array, 0, array.Length);
-                    return new ResponseData(response, array, System.Text.Encoding.UTF8, MimeTypeMap.GetMimeType(ext), 200);
-                }
+} catch (Exception ex) {
+    return ApiServer.ErrorData(response, $"Error getting file: {ex.Message}", 500);
+}
             } else {
                 return ApiServer.ErrorData(response, $"Cannot {request.HttpMethod} {request.Url.AbsolutePath}", 404);
             }
+        }
+
+        internal Headers signAWSRequest(string method, string path, string payloadHash){
+                var date = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+
+                string canonicalRequest = $"{method}\n" +
+                                          $"{Program.aws_base_path}{path}" + "\n" +
+                                          "\n"+ 
+                                          $"host:{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com\n" +
+                                          $"x-amz-content-sha256:{payloadHash}\n"+
+                                          $"x-amz-date:{date}\n"+
+                                          "\n"+
+                                          "host;x-amz-content-sha256;x-amz-date\n"+
+                                          $"{payloadHash}";
+
+                string scope = DateTime.UtcNow.ToString("yyyyMMdd") + "/" + Program.aws_bucket_region + "/s3/aws4_request";
+                string stringToSign = "AWS4-HMAC-SHA256" + "\n" + date + "\n" + scope + "\n" + BitConverter.ToString(Program.mySHA256.ComputeHash(Encoding.UTF8.GetBytes(canonicalRequest))).Replace("-", "").ToLower();
+
+                HMACSHA256 DateKey = new HMACSHA256(Encoding.UTF8.GetBytes($"AWS4{Program.aws_secret_key}"));
+                byte[] DateRegionKeyKey = DateKey.ComputeHash(Encoding.UTF8.GetBytes(DateTime.UtcNow.ToString("yyyyMMdd")));
+                HMACSHA256 DateRegionKey = new HMACSHA256(DateRegionKeyKey);
+                byte[] DateRegionServiceKeyKey = DateRegionKey.ComputeHash(Encoding.UTF8.GetBytes(Program.aws_bucket_region));
+                HMACSHA256 DateRegionServiceKey = new HMACSHA256(DateRegionServiceKeyKey);
+                byte[] SigningKeyKey = DateRegionServiceKey.ComputeHash(Encoding.UTF8.GetBytes("s3"));
+                HMACSHA256 SigningKey = new HMACSHA256(SigningKeyKey);
+                byte[] key = SigningKey.ComputeHash(Encoding.UTF8.GetBytes("aws4_request"));
+
+                HMACSHA256 final = new HMACSHA256(key);
+                byte[] signature = final.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
+
+                string authHeader = $"AWS4-HMAC-SHA256 Credential={Program.aws_access_key}/{scope},SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature={BitConverter.ToString(signature).Replace("-", "").ToLower()}";
+
+                return new Headers(authHeader, payloadHash, date);
         }
     }
 
@@ -175,6 +197,24 @@ namespace Server {
 
         public UploadPermResponse(string putfile){
             this.putfile = putfile;
+        }
+    }
+
+    [Serializable]
+    class Headers {
+        [JsonPropertyName("Authorization")]
+        public string Authorization {get; set;}
+
+        [JsonPropertyName("x-amz-content-sha256")]
+        public string x_amz_content_sha256 {get; set;}
+
+        [JsonPropertyName("x-amz-date")]
+        public string x_amz_date {get; set;}
+
+        public Headers(string Authorization, string x_amz_content_sha256, string x_amz_date){
+            this.Authorization = Authorization;
+            this.x_amz_content_sha256 = x_amz_content_sha256;
+            this.x_amz_date = x_amz_date;
         }
     }
 }
