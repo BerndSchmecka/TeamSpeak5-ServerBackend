@@ -63,11 +63,17 @@ namespace Server {
                     return ApiServer.TS5ErrorData(response, "UNAUTHORIZED", "unauthorized path", 401);
                 }
 
+                var contentType = request.Headers.Get("x-upload-content-type");
+                var contentLength = request.Headers.Get("x-upload-content-length");
+                if(contentLength == null ||contentType == null) {
+                    return ApiServer.ErrorData(response, "Missing headers!", 400);
+                }
+
                 var endpointUrl = $"https://{Program.aws_bucket_name}.s3.{Program.aws_bucket_region}.amazonaws.com{Program.aws_base_path}{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}";
 
                 return new ResponseData(response, JsonSerializer.Serialize(new { 
                     location = endpointUrl,
-                    headers = signAWSRequest("PUT", $"{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", "UNSIGNED-PAYLOAD")
+                    headers = new SentHeaders(signAWSRequest("PUT", $"{homeServer}/{serverId}/{roomId}/{uuidHex}/{fileName}", "UNSIGNED-PAYLOAD"), contentType, contentLength)
                 }), "application/json", 200);
 
             } else if(path.StartsWith("/files/v1/file/")) {
@@ -215,6 +221,40 @@ try {
             this.Authorization = Authorization;
             this.x_amz_content_sha256 = x_amz_content_sha256;
             this.x_amz_date = x_amz_date;
+        }
+    }
+
+        [Serializable]
+    class SentHeaders {
+        [JsonPropertyName("Authorization")]
+        public string Authorization {get; set;}
+
+        [JsonPropertyName("x-amz-content-sha256")]
+        public string x_amz_content_sha256 {get; set;}
+
+        [JsonPropertyName("x-amz-date")]
+        public string x_amz_date {get; set;}
+
+        [JsonPropertyName("content-type")]
+        public string contentType {get; set;}
+
+        [JsonPropertyName("content-length")]
+        public string contentLength {get; set;}
+
+        public SentHeaders(string Authorization, string x_amz_content_sha256, string x_amz_date, string contentType, string contentLength){
+            this.Authorization = Authorization;
+            this.x_amz_content_sha256 = x_amz_content_sha256;
+            this.x_amz_date = x_amz_date;
+            this.contentLength = contentLength;
+            this.contentType = contentType;
+        }
+
+        public SentHeaders(Headers headers, string contentType, string contentLength){
+            this.Authorization = headers.Authorization;
+            this.x_amz_content_sha256 = headers.x_amz_content_sha256;
+            this.x_amz_date = headers.x_amz_date;
+            this.contentLength = contentLength;
+            this.contentType = contentType;
         }
     }
 }
