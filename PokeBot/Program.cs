@@ -24,6 +24,7 @@ namespace PokeBot {
 
         public static string serverId = "";
         public static string serverAddress = "";
+        public static string? serverPassword = null;
         //public static string administrativeDomain = "";
         public static string chatTokenSecret = "";
         public static string clientIdentity = "";
@@ -42,19 +43,21 @@ namespace PokeBot {
             #endif
 
             Config cfg = JsonFileReader.Read<Config>("config.json");
-            if(cfg.configVersion != 1) {
+            if(cfg.configVersion != 2) {
                 Console.WriteLine("Wrong config version, exiting ...");
                 return;
             }
 
             Program.serverId = cfg.serverId;
             Program.serverAddress = cfg.serverAddress;
+            Program.serverPassword = cfg.serverPassword;
             //Program.administrativeDomain = cfg.administrativeDomain;
             Program.chatTokenSecret = cfg.chatTokenSecret;
             Program.clientIdentity = cfg.clientIdentity;
 
             Console.WriteLine($"serverId={serverId}");
             Console.WriteLine($"serverAddress={serverAddress}");
+            Console.WriteLine($"serverPassword={(serverPassword != null)}");
             //Console.WriteLine($"administrativeDomain={administrativeDomain}");
             Console.WriteLine($"chatTokenSecret={chatTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine($"clientIdentity={clientIdentity.Substring(0, 5) + " ..."}");
@@ -62,6 +65,9 @@ namespace PokeBot {
             ConnectionDataFull cd = new ConnectionDataFull();
             cd.Address = Program.serverAddress;
             cd.Username = "PokeBot";
+            if(Program.serverPassword != null){
+                cd.ServerPassword = Program.serverPassword;
+            }
             cd.Identity = TsCrypt.LoadIdentityDynamic(clientIdentity).Value;
             cd.VersionSign = new VersionSign("5.0.0-qa-request-chat-7 [Build: 1646854452]", "Windows", "0iRGPzh37MelxPeKE15K754jAi+yXJ2bu+pXV1ErOFbEF504WtUZaAIoFVHBNheIVdSCrxuWFF17xG1w2gSICQ==");
 
