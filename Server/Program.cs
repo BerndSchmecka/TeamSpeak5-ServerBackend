@@ -33,9 +33,13 @@ namespace Server
         public static string REGEX_STORAGE_PATH = @"\/storage\/([A-Za-z0-9.]+)\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/([A-Za-z]{18})\/([a-fA-F0-9]{40})\/([^/]*$)";
         public static string PUTFILE_ROOM_PLACEHOLDER = "aaaaaaaaaaaaaaaaaa";
 
+        public static string REGEX_APPSERVICE_USERS = @"\/_matrix\/app\/v1\/users\/@ts_([0-9a-fA-F]{40})_([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}):([A-Za-z0-9.-]+\.[A-Za-z]{2,})";
+
         public static SHA256 mySHA256 = SHA256.Create();
 
         internal static string localHomeServer = "";
+        internal static string appServiceToken = "";
+        internal static string homeServerToken = "";
         internal static string uploadTokenSecret = "";
         internal static string downloadTokenSecret = "";
 
@@ -56,11 +60,13 @@ namespace Server
             #endif
 
             Config cfg = JsonFileReader.Read<Config>("config.json");
-            if(cfg.configVersion != 2) {
+            if(cfg.configVersion != 3) {
                 Console.WriteLine("Wrong config version, exiting ...");
                 return;
             }
             Program.localHomeServer = cfg.localHomeServer;
+            Program.appServiceToken = cfg.as_token;
+            Program.homeServerToken = cfg.hs_token;
             Program.uploadTokenSecret = cfg.uploadTokenSecret;
             Program.downloadTokenSecret = cfg.downloadTokenSecret;
 
@@ -72,6 +78,8 @@ namespace Server
 
             Console.WriteLine("--------------------------------------------");
             Console.WriteLine($"localHomeServer={localHomeServer}");
+            Console.WriteLine($"appServiceToken={appServiceToken.Substring(0, 5) + " ..."}");
+            Console.WriteLine($"homeServerToken={homeServerToken.Substring(0, 5) + " ..."}");
             Console.WriteLine($"uploadTokenSecret={uploadTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine($"downloadTokenSecret={downloadTokenSecret.Substring(0, 5) + " ..."}");
             Console.WriteLine("--------------------------------------------");

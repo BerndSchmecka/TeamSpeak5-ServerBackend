@@ -8,6 +8,13 @@ namespace Server {
         public int configVersion {get; set;}
         [JsonPropertyName("localHomeServer")]
         public string localHomeServer {get; set;}
+
+        [JsonPropertyName("as_token")]
+        public string as_token {get; set;}
+
+                [JsonPropertyName("hs_token")]
+        public string hs_token {get; set;}
+
         [JsonPropertyName("uploadTokenSecret")]
         public string uploadTokenSecret {get; set;}
         [JsonPropertyName("downloadTokenSecret")]
@@ -16,9 +23,11 @@ namespace Server {
         [JsonPropertyName("awsInfo")]
         public AWSInfo awsInfo {get; set;}
 
-        public Config(int configVersion, string localHomeServer, string uploadTokenSecret, string downloadTokenSecret, AWSInfo awsInfo){
+        public Config(int configVersion, string localHomeServer, string as_token, string hs_token, string uploadTokenSecret, string downloadTokenSecret, AWSInfo awsInfo){
             this.configVersion = configVersion;
             this.localHomeServer = localHomeServer;
+            this.as_token = as_token;
+            this.hs_token = hs_token;
             this.uploadTokenSecret = uploadTokenSecret;
             this.downloadTokenSecret = downloadTokenSecret;
             this.awsInfo = awsInfo;

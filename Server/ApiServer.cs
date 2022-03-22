@@ -74,6 +74,8 @@ namespace Server {
                     Handler handler;
                     if(request.Url.AbsolutePath.StartsWith("/files/v1/file/")) {
                         handler = new HandlerFiles();
+                    } else if (request.Url.AbsolutePath.StartsWith("/_matrix/app/v1/users/")) {
+                        handler = new HandlerAppService();
                     } else {
                         handler = new HandlerDefault();
                     }
@@ -86,7 +88,18 @@ namespace Server {
                 } else if (request.HttpMethod == "OPTIONS"){
                     rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
                 } else if (request.HttpMethod == "PUT") {
-                    rd = new ResponseData(response, Program.ERROR_TEMPLATE("405 Method Not Allowed"), "text/html", 405);
+                    Handler handler;
+                    if(request.Url.AbsolutePath.StartsWith("/_matrix/app/v1/transactions/")) {
+                        handler = new HandlerAppService();
+                    } else {
+                        handler = new HandlerDefault();
+                    }
+
+                    try {
+                        rd = await handler.generateResponse(request, response);
+                    } catch (Exception ex) {
+                        rd = ApiServer.ErrorData(response, ex.Message, 500);
+                    }
                 } else if (request.HttpMethod == "POST") {
                     Handler handler;
                     if(request.Url.AbsolutePath.StartsWith("/authorization/")) {
