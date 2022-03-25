@@ -4,3 +4,5 @@ obj/
 FileStorage/
 config.json
 .DS_Store
+index.js
+node_modules/
