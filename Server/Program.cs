@@ -60,7 +60,7 @@ namespace Server
             #endif
 
             Config cfg = JsonFileReader.Read<Config>("config.json");
-            if(cfg.configVersion != 3) {
+            if(cfg.configVersion != 4) {
                 Console.WriteLine("Wrong config version, exiting ...");
                 return;
             }
@@ -87,7 +87,7 @@ namespace Server
             Console.WriteLine($"awsAccessKey={aws_access_key}");
             Console.WriteLine($"awsSecretKey={aws_secret_key.Substring(0, 5) + " ..."}");
             Console.WriteLine("--------------------------------------------");
-            Console.WriteLine("Starting server ...");
+            Console.WriteLine("Starting Server ...");
             ApiServer server = new ApiServer();
             server.StartServer();
         }

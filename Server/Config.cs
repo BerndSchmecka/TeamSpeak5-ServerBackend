@@ -12,7 +12,7 @@ namespace Server {
         [JsonPropertyName("as_token")]
         public string as_token {get; set;}
 
-                [JsonPropertyName("hs_token")]
+        [JsonPropertyName("hs_token")]
         public string hs_token {get; set;}
 
         [JsonPropertyName("uploadTokenSecret")]
@@ -22,7 +22,6 @@ namespace Server {
 
         [JsonPropertyName("awsInfo")]
         public AWSInfo awsInfo {get; set;}
-
         public Config(int configVersion, string localHomeServer, string as_token, string hs_token, string uploadTokenSecret, string downloadTokenSecret, AWSInfo awsInfo){
             this.configVersion = configVersion;
             this.localHomeServer = localHomeServer;
